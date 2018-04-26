@@ -9,16 +9,23 @@ namespace RServeClient
 {
     public class RServeClient
     {
-        public void Run()
+        public void Run(string script)
         {
-            using (var rconnection = new Rconnection("127.0.0.1", 6311))
+            try
             {
-                rconnection.Connect();
-                string printStatement = $@"print(""imran"")";
+                using (var rconnection = new Rconnection("127.0.0.1", 6311))
+                {
+                    rconnection.Connect();
 
-                var result = rconnection.Eval(printStatement);
+                    var result = rconnection.Eval(script);
 
-                rconnection.Disconnect();
+                    rconnection.Disconnect();
+                }
+            }
+            catch (RserveLink.RconnectionException myException)
+            {
+                var message = myException.Message;
+                throw;
             }
         }
     }
