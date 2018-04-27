@@ -13,7 +13,7 @@ namespace InlineRTester
             var rServeClientTester = new RServeClient.RServeClient();
             var script = $@"print(""imran"")";
 
-            rServeClientTester.Run(script);
+            rServeClientTester.RunLineByLine(script);
         }
 
         [TestMethod]
@@ -22,7 +22,7 @@ namespace InlineRTester
             var rServeClientTester = new RServeClient.RServeClient();
             var script = $@"getwd()";
 
-            rServeClientTester.Run(script);
+            rServeClientTester.RunLineByLine(script);
         }
 
         public static string GetLocalhostFqdn()
@@ -47,6 +47,7 @@ print(""Hello world"")
 installed.packages()[,c(1,3:4)]
 
 library(RODBC)
+library(jsonlite)
 
 servername = ""{fullMachineName}""
 
@@ -59,9 +60,16 @@ res <- sqlQuery(ch, sql)
   
 head(res, n = 20L)
 
-odbcClose(ch)";
+odbcClose(ch)
 
-            rServeClientTester.Run(script);
+cat(""Finished script"")
+print(res)
+jsonlite::toJSON(res)";
+
+            var json = rServeClientTester.Run(script);
+            var rowsCount = json.Rows.Count;
+            var row = json.Rows[0];
+            var column  = row[0];
         }
     }
 }
