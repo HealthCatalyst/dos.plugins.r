@@ -16,33 +16,39 @@ namespace InlineRTester
         }
 
         [TestMethod]
+        public void TestRunSimple()
+        {
+            var rServeClientTester = new RServeClient.RServeClient();
+            var script = $@"getwd()";
+
+            rServeClientTester.Run(script);
+        }
+
+        [TestMethod]
         public void TestRunSqlQuery()
         {
             var rServeClientTester = new RServeClient.RServeClient();
             var script = $@"
-                library(RODBC)
+print(""Hello world"")
 
-                servername = ""hc2427.hqcatalyst.local""
+.libPaths()
 
-                connectionstring <- paste(""driver = ODBC Driver 17 for SQL Server; server = "",servername, ""; Database = master; Trusted_Connection = yes"", sep = """")
+installed.packages()[,c(1,3:4)]
 
-                print(""Hello world"")
+library(RODBC)
 
-                sql < -c(""select name from sys.databases"")
-                tryCatch({{
-                    ch < -odbcDriverConnect(connectionstring)
+servername = ""hc2427.hqcatalyst.local""
 
-                    res < -sqlQuery(ch, sql)
-                    print(""success"")
-                }},error = function(e) {{
-                    print(e)
-                    print(odbcGetErrMsg(ch))
-                    print(""error"")
-                }})
+connectionstring <- paste(""driver=ODBC Driver 17 for SQL Server;server="",servername, "";Database=master;Trusted_Connection=yes"", sep = """")
+
+print(connectionstring)
+sql <- c(""select name from sys.databases"")
+ch <- odbcDriverConnect(connectionstring)
+res <- sqlQuery(ch, sql)
   
-                head(res, n = 20L)
+head(res, n = 20L)
 
-                odbcClose(ch)";
+odbcClose(ch)";
 
             rServeClientTester.Run(script);
         }

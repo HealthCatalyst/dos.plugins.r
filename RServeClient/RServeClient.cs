@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RserveLink;
+using RserveCLI2;
 
 namespace RServeClient
 {
@@ -11,22 +11,36 @@ namespace RServeClient
     {
         public void Run(string script)
         {
-            try
+            using (var rconnection = RConnection.Connect(new System.Net.IPAddress(new byte[] { 127, 0, 0, 1 })))
             {
-                using (var rconnection = new Rconnection("127.0.0.1", 6311))
+                var lines = GetLines(script, true);
+
+                foreach (var line in lines)
                 {
-                    rconnection.Connect();
-
-                    var result = rconnection.Eval(script);
-
-                    rconnection.Disconnect();
+                    RunRCode(line, rconnection);
                 }
             }
-            catch (RserveLink.RconnectionException myException)
+        }
+
+        private static void RunRCode(string script, RConnection rconnection)
+        {
+            try
             {
+                // rserve faq: https://www.rforge.net/Rserve/faq.html
+                var result = rconnection.Eval(script);
+            }
+            catch (Exception myException)
+            {
+                var error = rconnection.Eval("geterrmessage()");
                 var message = myException.Message;
                 throw;
             }
+        }
+
+        private static IEnumerable<string> GetLines(string str, bool removeEmptyLines = false)
+        {
+            return str.Split(new[] { "\r\n", "\r", "\n" },
+                removeEmptyLines ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.None);
         }
     }
 }
