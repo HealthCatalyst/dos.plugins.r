@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.NetworkInformation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace InlineRTester
@@ -24,11 +25,19 @@ namespace InlineRTester
             rServeClientTester.Run(script);
         }
 
+        public static string GetLocalhostFqdn()
+        {
+            var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+            return string.Format("{0}.{1}", ipProperties.HostName, ipProperties.DomainName);
+        }
+
         [TestMethod]
         public void TestRunSqlQuery()
         {
             var rServeClientTester = new RServeClient.RServeClient();
             var machineName = Environment.MachineName;
+            var fullMachineName = GetLocalhostFqdn();
+
 
             var script = $@"
 print(""Hello world"")
@@ -39,7 +48,7 @@ installed.packages()[,c(1,3:4)]
 
 library(RODBC)
 
-servername = ""{machineName}.hqcatalyst.local2""
+servername = ""{fullMachineName}""
 
 connectionstring <- paste(""driver=ODBC Driver 17 for SQL Server;server="",servername, "";Database=master;Trusted_Connection=yes"", sep = """")
 
