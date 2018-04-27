@@ -27,7 +27,8 @@ namespace RServeClient
             try
             {
                 // rserve faq: https://www.rforge.net/Rserve/faq.html
-                var result = rconnection.Eval(script);
+                // var result = rconnection.Eval(script);
+                rconnection.VoidEval(script);
             }
             catch (Exception myException)
             {

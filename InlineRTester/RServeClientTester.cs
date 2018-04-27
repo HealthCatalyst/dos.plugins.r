@@ -39,7 +39,7 @@ installed.packages()[,c(1,3:4)]
 
 library(RODBC)
 
-servername = ""{machineName}.hqcatalyst.local""
+servername = ""{machineName}.hqcatalyst.local2""
 
 connectionstring <- paste(""driver=ODBC Driver 17 for SQL Server;server="",servername, "";Database=master;Trusted_Connection=yes"", sep = """")
 
