@@ -28,6 +28,8 @@ namespace InlineRTester
         public void TestRunSqlQuery()
         {
             var rServeClientTester = new RServeClient.RServeClient();
+            var machineName = Environment.MachineName;
+
             var script = $@"
 print(""Hello world"")
 
@@ -37,7 +39,7 @@ installed.packages()[,c(1,3:4)]
 
 library(RODBC)
 
-servername = ""hc2427.hqcatalyst.local""
+servername = ""{machineName}.hqcatalyst.local""
 
 connectionstring <- paste(""driver=ODBC Driver 17 for SQL Server;server="",servername, "";Database=master;Trusted_Connection=yes"", sep = """")
 
