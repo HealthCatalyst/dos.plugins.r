@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data;
 using System.Net.NetworkInformation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -7,6 +10,8 @@ namespace InlineRTester
     [TestClass]
     public class RServeClientTester
     {
+        const string serverfolder = "/opt/healthcatalyst/models/";
+
         [TestMethod]
         public void TestRunSimplePrintStatement()
         {
@@ -20,7 +25,7 @@ namespace InlineRTester
         public void TestRunSimple()
         {
             var rServeClientTester = new RServeClient.RServeClient();
-            var script = $@"getwd()";
+            var script = $@"setwd(""{ serverfolder}"");getwd()";
 
             rServeClientTester.RunLineByLine(script);
         }
@@ -41,7 +46,7 @@ namespace InlineRTester
 
             var script = $@"
 print(""Hello world"")
-
+setwd(""{ serverfolder}"");
 .libPaths()
 
 installed.packages()[,c(1,3:4)]
@@ -66,10 +71,36 @@ cat(""Finished script"")
 print(res)
 jsonlite::toJSON(res)";
 
-            var json = rServeClientTester.Run(script);
-            var rowsCount = json.Rows.Count;
-            var row = json.Rows[0];
+            var dataTable = rServeClientTester.Run<DataTable>(script);
+            var rowsCount = dataTable.Rows.Count;
+            var row = dataTable.Rows[0];
             var column  = row[0];
+
+            dataTable.Print();
+        }
+
+
+        [TestMethod]
+        public void TestCopyModelFiles()
+        {
+            var rServeClientTester = new RServeClient.RServeClient();
+
+
+            var strings = new [] { @"C:\himss\R\rmodel_info_SepsisLassoModel_lasso.rda", @"C:\himss\R\rmodel_probability_SepsisLassoModel_lasso.rda" };
+            rServeClientTester.CopyFilesToRserve(strings, serverfolder);
+
+            var script = $@"
+library(jsonlite)
+res <- list.files(""{serverfolder}"")
+jsonlite::toJSON(res)";
+
+            var list = rServeClientTester.Run<IList>(script);
+
+            Console.WriteLine($"Files in {serverfolder}");
+            foreach (var item in list)
+            {
+                Console.WriteLine(item);
+            }
         }
     }
 }

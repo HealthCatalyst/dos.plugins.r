@@ -12,7 +12,7 @@ namespace RServeClient
 {
     public class RServeClient
     {
-        public DataTable Run(string script)
+        public T Run<T>(string script)
         {
             using (var rconnection = RConnection.Connect(new System.Net.IPAddress(new byte[] { 127, 0, 0, 1 })))
             {
@@ -28,7 +28,23 @@ namespace RServeClient
                 var sexpArrayString = (SexpArrayString) result[0];
                 var json = sexpArrayString[0].ToString();
 
-                return JsonConvert.DeserializeObject<DataTable>(json);
+                return JsonConvert.DeserializeObject<T>(json);
+            }
+        }
+
+        public void CopyFilesToRserve(string[] files, string serverfolder)
+        {
+            using (var rconnection = RConnection.Connect(new System.Net.IPAddress(new byte[] { 127, 0, 0, 1 })))
+            {
+                foreach (var file in files)
+                {
+                    var fileName = Path.GetFileName(file);
+                    var serverFileName = serverfolder + fileName;
+                    using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
+                    {
+                        rconnection.WriteFile(serverFileName, stream);
+                    }
+                }
             }
         }
 
@@ -72,7 +88,7 @@ namespace RServeClient
             {
                 var error = rconnection.Eval("geterrmessage()");
                 var message = myException.Message;
-                throw;
+                throw new Exception(error.AsString, myException);
             }
         }
 
