@@ -15,31 +15,42 @@ namespace InlineRTester
         [TestMethod]
         public void TestRunSimplePrintStatement()
         {
-            var rServeClientTester = new RServeClient.RServeClient();
-            var script = $@"print(""imran"")";
+            using (var rServeClientTester = new RServeClient.RServeClient())
+            {
+                var script = $@"print(""imran"")";
 
-            rServeClientTester.RunLineByLine(script);
+                rServeClientTester.RunLineByLine(script);
+
+            }
         }
 
         [TestMethod]
         public void TestRunSimple()
         {
-            var rServeClientTester = new RServeClient.RServeClient();
-            var script = $@"setwd(""{ serverfolder}"");getwd()";
+            using (var rServeClientTester = new RServeClient.RServeClient())
+            {
+                var script = $@"setwd(""{serverfolder}"");getwd()";
 
-            rServeClientTester.RunLineByLine(script);
+                var results = rServeClientTester.RunRCodeOneLineAsStringArray(script);
+                foreach (var result in results)
+                {
+                    Console.WriteLine(result);
+                }
+            }
         }
 
         [TestMethod]
         public void TestShowInstalledPackages()
         {
-            var rServeClientTester = new RServeClient.RServeClient();
-            var script = $@"setwd(""{ serverfolder}"");installed.packages()[,1]";
-
-            var results = rServeClientTester.RunRCodeOneLine(script);
-            foreach (var result in results)
+            using (var rServeClientTester = new RServeClient.RServeClient())
             {
-                Console.WriteLine(result);
+                var script = $@"setwd(""{serverfolder}"");installed.packages()[,1]";
+
+                var results = rServeClientTester.RunRCodeOneLineAsStringArray(script);
+                foreach (var result in results)
+                {
+                    Console.WriteLine(result);
+                }
             }
         }
 
@@ -52,14 +63,15 @@ namespace InlineRTester
         [TestMethod]
         public void TestRunSqlQuery()
         {
-            var rServeClientTester = new RServeClient.RServeClient();
-            var machineName = Environment.MachineName;
-            var fullMachineName = GetLocalhostFqdn();
+            using (var rServeClientTester = new RServeClient.RServeClient())
+            {
+                var machineName = Environment.MachineName;
+                var fullMachineName = GetLocalhostFqdn();
 
 
-            var script = $@"
+                var script = $@"
 print(""Hello world"")
-setwd(""{ serverfolder}"");
+setwd(""{serverfolder}"");
 .libPaths()
 
 installed.packages()[,c(1,3:4)]
@@ -84,34 +96,50 @@ cat(""Finished script"")
 print(res)
 jsonlite::toJSON(res)";
 
-            var dataTable = rServeClientTester.Run<DataTable>(script);
-            var rowsCount = dataTable.Rows.Count;
-            var row = dataTable.Rows[0];
-            var column  = row[0];
+                var dataTable = rServeClientTester.Run<DataTable>(script);
+                var rowsCount = dataTable.Rows.Count;
+                var row = dataTable.Rows[0];
+                var column = row[0];
 
-            dataTable.Print();
+                dataTable.Print();
+            }
         }
 
 
         [TestMethod]
         public void TestCopyModelFiles()
         {
-            var rServeClientTester = new RServeClient.RServeClient();
+            using (var rServeClientTester = new RServeClient.RServeClient())
+            {
 
-            var strings = new [] { @"C:\himss\R\rmodel_info_SepsisLassoModel_lasso.rda", @"C:\himss\R\rmodel_probability_SepsisLassoModel_lasso.rda" };
-            rServeClientTester.CopyFilesToRserveAsync(strings, serverfolder);
+                var localfolder = @"C:\himss\R\";
+                var files = new[]
+                    {$@"rmodel_info_SepsisLassoModel_lasso.rda", @"rmodel_probability_SepsisLassoModel_lasso.rda"};
 
-            var script = $@"
+                var fileExists = rServeClientTester.DoAllFilesExist(serverfolder, files);
+
+                if (fileExists != true)
+                {
+                    Console.WriteLine($"Sending files from {localfolder} to rserve folder {serverfolder}");
+                    rServeClientTester.CopyFilesToRserve(localfolder, serverfolder, files);
+                }
+                else
+                {
+                    Console.WriteLine("File already exists so no need to send it");
+                }
+
+                var script = $@"
 library(jsonlite)
 res <- list.files(""{serverfolder}"")
 jsonlite::toJSON(res)";
 
-            var list = rServeClientTester.Run<IList>(script);
+                var list = rServeClientTester.Run<IList>(script);
 
-            Console.WriteLine($"Files in {serverfolder}");
-            foreach (var item in list)
-            {
-                Console.WriteLine(item);
+                Console.WriteLine($"Files in {serverfolder}");
+                foreach (var item in list)
+                {
+                    Console.WriteLine(item);
+                }
             }
         }
 
@@ -119,22 +147,24 @@ jsonlite::toJSON(res)";
         [TestMethod]
         public void TestInstallPackages()
         {
-            var rServeClientTester = new RServeClient.RServeClient();
+            using (var rServeClientTester = new RServeClient.RServeClient())
+            {
 
-            var script = $@"
-setwd(""{ serverfolder}"")
+                var script = $@"
+setwd(""{serverfolder}"")
 install.packages('randgeo', repos='https://cran.r-project.org')
 library(jsonlite)
 library(randgeo)
 res <- wkt_point()
 jsonlite::toJSON(res)";
 
-            var list = rServeClientTester.Run<IList>(script);
-            foreach (var item in list)
-            {
-                Console.WriteLine(item);
-            }
+                var list = rServeClientTester.Run<IList>(script);
+                foreach (var item in list)
+                {
+                    Console.WriteLine(item);
+                }
 
+            }
         }
     }
 }
