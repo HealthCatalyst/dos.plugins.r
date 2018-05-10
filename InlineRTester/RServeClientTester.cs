@@ -72,7 +72,7 @@ servername = ""{fullMachineName}""
 connectionstring <- paste(""driver=ODBC Driver 17 for SQL Server;server="",servername, "";Database=master;Trusted_Connection=yes"", sep = """")
 
 print(connectionstring)
-sql <- c(""select name from sys.databases"")
+sql <- c(""select database_id, name from sys.databases"")
 ch <- odbcDriverConnect(connectionstring)
 res <- sqlQuery(ch, sql)
   
@@ -99,7 +99,7 @@ jsonlite::toJSON(res)";
             var rServeClientTester = new RServeClient.RServeClient();
 
             var strings = new [] { @"C:\himss\R\rmodel_info_SepsisLassoModel_lasso.rda", @"C:\himss\R\rmodel_probability_SepsisLassoModel_lasso.rda" };
-            rServeClientTester.CopyFilesToRserve(strings, serverfolder);
+            rServeClientTester.CopyFilesToRserveAsync(strings, serverfolder);
 
             var script = $@"
 library(jsonlite)

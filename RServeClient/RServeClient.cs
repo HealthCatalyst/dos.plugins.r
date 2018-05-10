@@ -19,7 +19,7 @@ namespace RServeClient
                 // copy file to rserve
                 var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(script));
                 var myscriptR = "myscript.R";
-                rconnection.WriteFile(myscriptR, memoryStream);
+                rconnection.WriteFileAsync(myscriptR, memoryStream).Wait();
 
                 var code = $@"source(""{myscriptR}"")";
 
@@ -32,7 +32,7 @@ namespace RServeClient
             }
         }
 
-        public void CopyFilesToRserve(string[] files, string serverfolder)
+        public void CopyFilesToRserveAsync(string[] files, string serverfolder)
         {
             using (var rconnection = RConnection.Connect(new System.Net.IPAddress(new byte[] { 127, 0, 0, 1 })))
             {
@@ -42,7 +42,7 @@ namespace RServeClient
                     var serverFileName = serverfolder + fileName;
                     using (var stream = new FileStream(file, FileMode.Open, FileAccess.Read))
                     {
-                        rconnection.WriteFile(serverFileName, stream);
+                        rconnection.WriteFileAsync(serverFileName, stream).Wait();
                     }
                 }
             }
@@ -56,22 +56,22 @@ namespace RServeClient
 
                 foreach (var line in lines)
                 {
-                    RunRCodeNoOutput(line, rconnection);
+                    RunRCodeNoOutputAsync(line, rconnection);
                 }
             }
         }
 
 
-        private static void RunRCodeNoOutput(string script, RConnection rconnection)
+        private static void RunRCodeNoOutputAsync(string script, RConnection rconnection)
         {
             try
             {
                 // rserve faq: https://www.rforge.net/Rserve/faq.html
-                rconnection.VoidEval(script);
+                rconnection.VoidEvalAsync(script).Wait();
             }
             catch (Exception myException)
             {
-                var error = rconnection.Eval("geterrmessage()");
+                var error = rconnection.EvalAsync("geterrmessage()").Result;
                 var message = myException.Message;
                 throw;
             }
@@ -90,12 +90,12 @@ namespace RServeClient
             try
             {
                 // rserve faq: https://www.rforge.net/Rserve/faq.html
-                var result = rconnection.Eval(script);
+                var result = rconnection.EvalAsync(script).Result;
                 return result;
             }
             catch (Exception myException)
             {
-                var error = rconnection.Eval("geterrmessage()");
+                var error = rconnection.EvalAsync("geterrmessage()").Result;
                 var message = myException.Message;
                 throw new Exception(error.AsString, myException);
             }
