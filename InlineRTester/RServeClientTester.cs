@@ -30,6 +30,19 @@ namespace InlineRTester
             rServeClientTester.RunLineByLine(script);
         }
 
+        [TestMethod]
+        public void TestShowInstalledPackages()
+        {
+            var rServeClientTester = new RServeClient.RServeClient();
+            var script = $@"setwd(""{ serverfolder}"");installed.packages()[,1]";
+
+            var results = rServeClientTester.RunRCodeOneLine(script);
+            foreach (var result in results)
+            {
+                Console.WriteLine(result);
+            }
+        }
+
         public static string GetLocalhostFqdn()
         {
             var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
@@ -85,7 +98,6 @@ jsonlite::toJSON(res)";
         {
             var rServeClientTester = new RServeClient.RServeClient();
 
-
             var strings = new [] { @"C:\himss\R\rmodel_info_SepsisLassoModel_lasso.rda", @"C:\himss\R\rmodel_probability_SepsisLassoModel_lasso.rda" };
             rServeClientTester.CopyFilesToRserve(strings, serverfolder);
 
@@ -101,6 +113,28 @@ jsonlite::toJSON(res)";
             {
                 Console.WriteLine(item);
             }
+        }
+
+
+        [TestMethod]
+        public void TestInstallPackages()
+        {
+            var rServeClientTester = new RServeClient.RServeClient();
+
+            var script = $@"
+setwd(""{ serverfolder}"")
+install.packages('randgeo', repos='https://cran.r-project.org')
+library(jsonlite)
+library(randgeo)
+res <- wkt_point()
+jsonlite::toJSON(res)";
+
+            var list = rServeClientTester.Run<IList>(script);
+            foreach (var item in list)
+            {
+                Console.WriteLine(item);
+            }
+
         }
     }
 }

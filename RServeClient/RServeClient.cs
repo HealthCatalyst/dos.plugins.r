@@ -61,6 +61,7 @@ namespace RServeClient
             }
         }
 
+
         private static void RunRCodeNoOutput(string script, RConnection rconnection)
         {
             try
@@ -76,6 +77,14 @@ namespace RServeClient
             }
         }
 
+        public string[] RunRCodeOneLine(string line)
+        {
+            using (var rconnection = RConnection.Connect(new System.Net.IPAddress(new byte[] { 127, 0, 0, 1 })))
+            {
+                var result = RunRCode(line, rconnection);
+                return result.AsStrings;
+            }
+        }
         private static Sexp RunRCode(string script, RConnection rconnection)
         {
             try
