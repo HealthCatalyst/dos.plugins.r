@@ -4,6 +4,7 @@ using System.Data;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -126,6 +127,20 @@ namespace RServeClient
         public void Dispose()
         {
             _rconnection.Dispose();
+        }
+
+        [Pure]
+        public string GetMD5HashOfFile(string localfolder, string file)
+        {
+            using (var md5 = MD5.Create())
+            {
+                var filename = Path.Combine(localfolder, file);
+                using (var stream = File.OpenRead(filename))
+                {
+                    var hash = md5.ComputeHash(stream);
+                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                }
+            }
         }
     }
 }
