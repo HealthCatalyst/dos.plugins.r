@@ -52,13 +52,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PrintDataExtensions.cs" />
+    <Compile Include="RegexTester.cs" />
     <Compile Include="RServeClientTester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="TestBinding.R" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\InLineR\InLineR.csproj">
+      <Project>{6B200812-E11E-4F53-9546-5E032898B7CE}</Project>
+      <Name>InLineR</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RServeClient\RServeClient.csproj">
       <Project>{739A0988-98B4-4475-8006-612C3DD712BA}</Project>
       <Name>RServeClient</Name>

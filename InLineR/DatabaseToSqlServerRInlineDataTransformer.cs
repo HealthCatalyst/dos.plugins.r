@@ -59,7 +59,8 @@
 
             return DataSystemTypeCode.AcceptableDatabaseTypes.Contains(binding.SourceConnection.DataSystemTypeCode)
                    && destinationEntity.Connection.DataSystemTypeCode == DataSystemTypeCode.SqlServer
-                   && (binding.UserDefinedSql?.Contains(@"/*<r>") == true);
+                   && binding.UserDefinedSql != null
+                   && new ScriptParser().HasRCode(binding.UserDefinedSql);
         }
 
         protected override async Task<long> LoadStagingEntityAsync(
@@ -75,27 +76,7 @@
             using (IProcessingContextWrapper processingContextWrapper =
                 this.processingContextWrapperFactory.CreateProcessingContextWrapper())
             {
-                IList<string> lines = binding.UserDefinedSql.Split('\n').Where(l => l.HasData()).ToList();
-
-                var rScriptLines = new List<string>();
-                bool startR = false;
-                foreach (var line in lines)
-                {
-                    if (line.Contains("</r>"))
-                    {
-                        startR = false;
-                    }
-
-                    if (startR)
-                    {
-                        rScriptLines.Add(line);
-                    }
-
-                    if (line.Contains("<r>"))
-                    {
-                        startR = true;
-                    }
-                }
+                var rScriptLines = new ScriptParser().GetRCodeLines(binding.UserDefinedSql);
 
                 string pathToRModelFolder = processingContextWrapper
                     .GetSystemAttribute(AttributeName.PathToRModelFolder)?.AttributeValueText;
@@ -143,7 +124,10 @@
                     var scriptLines = rScriptLines.Take(rScriptLines.Count);
                     foreach (var scriptLine in scriptLines)
                     {
-                        sb.AppendFormat("{0}\n", scriptLine); //the newline is needed for R to work
+                        if (!scriptLine.EndsWith("\n"))
+                        {
+                            sb.AppendFormat("{0}\n", scriptLine); //the newline is needed for R to work
+                        }
                     }
 
                     sb.AppendLine();
@@ -154,8 +138,10 @@
                     sb.AppendLine();
                 }
 
+                sb.Append("#------ below code was injected by the DOS AI Engine ------\n");
                 string printStatement = $@"print(""{CompletedSuccessfullyText}"")";
                 sb.AppendFormat($"{printStatement}\n");
+                sb.AppendLine("#------ end of code injected by the DOS AI Engine ------\n");
 
                 return await this.StartScriptR(bindingExecution, sb.ToString());
             }
