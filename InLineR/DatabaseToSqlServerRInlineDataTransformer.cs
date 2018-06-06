@@ -76,74 +76,45 @@
             using (IProcessingContextWrapper processingContextWrapper =
                 this.processingContextWrapperFactory.CreateProcessingContextWrapper())
             {
-                var rScriptLines = new ScriptParser().GetRCodeLines(binding.UserDefinedSql);
-
                 string pathToRModelFolder = processingContextWrapper
                     .GetSystemAttribute(AttributeName.PathToRModelFolder)?.AttributeValueText;
 
-                // since we run R using the service account that DPE is running under, we have to set a folder in libpath
-                // so R can find the models and the installed packages
-                var libPaths = $@".libPaths( c( .libPaths(), ""{pathToRModelFolder}/lib"") )";
-                var workingDirectory = $@"setwd(""{pathToRModelFolder}"")";
-
                 string sourceConnectionDatabase = binding.SourceConnection.Database;
 
-                StringBuilder inputDfs = new StringBuilder();
+                var rScriptSourceEntityInfos = new List<RScriptSourceEntityInfo>();
                 foreach (int sourceEntityId in binding.SourcedByEntities.Select(e => e.SourceEntityId))
                 {
                     Entity sourceEntity = await this.metadataServiceClient.GetEntityAsync(sourceEntityId);
-                    inputDfs.AppendLine(
-                        $"{sourceEntity.DatabaseName}.{sourceEntity.SchemaName}.{sourceEntity.EntityName} <- sqlQuery(sourceConnection, \"SELECT * FROM {sourceEntity.DatabaseName}.{sourceEntity.SchemaName}.{sourceEntity.EntityName}\")");
+
+                    rScriptSourceEntityInfos.Add(new RScriptSourceEntityInfo
+                    {
+                        DatabaseName = sourceEntity.DatabaseName,
+                        EntityName = sourceEntity.EntityName,
+                        SchemaName = sourceEntity.SchemaName,
+                    });
 
                     // HACK: sourceConnectionDatabase is always set to master which doesn't work when R is trying to update the table
                     sourceConnectionDatabase = sourceEntity.DatabaseName;
                 }
 
-                var sourceConnectionString =
-                    $@"dos.source.connectionstring <- ""driver={{{
-                            binding.SourceConnection.DataSystemTypeCode
-                        }}};server={binding.SourceConnection.Server};database={
-                            sourceConnectionDatabase
-                        };trusted_connection=yes;""";
-
-                var destinationConnectionString =
-                    $@"dos.destination.connectionstring <- ""driver={{{entity.Connection.DataSystemTypeCode}}};server={
-                            entity.Connection.Server
-                        };database={entity.DatabaseName};trusted_connection=yes;""";
-
-                var sb = new StringBuilder();
-                sb.Append("#------ below code was injected by the DOS AI Engine ------\n");
-                sb.Append($"{libPaths}\n");
-                sb.Append($"{workingDirectory}\n");
-                sb.Append($"{sourceConnectionString}\n");
-                sb.Append($"{destinationConnectionString}\n");
-                sb.AppendLine("#------ end of code injected by the DOS AI Engine ------\n");
-
-                if (rScriptLines.Any())
+                var rScriptParameters = new RScriptParameters
                 {
-                    var scriptLines = rScriptLines.Take(rScriptLines.Count);
-                    foreach (var scriptLine in scriptLines)
-                    {
-                        if (!scriptLine.EndsWith("\n"))
-                        {
-                            sb.AppendFormat("{0}\n", scriptLine); //the newline is needed for R to work
-                        }
-                    }
+                    BindingScript = binding.Script,
+                    Script = binding.UserDefinedSql,
+                    CompletedSuccessfullyText = CompletedSuccessfullyText,
+                    DestinationDatabaseName = entity.Connection.Database,
+                    DestinationServer = entity.Connection.Server,
+                    DestinationSystemTypeCode = entity.Connection.DataSystemTypeCode,
+                    PathToRModelFolder = pathToRModelFolder,
+                    SourceConnectionDatabase = sourceConnectionDatabase,
+                    SourceDataSystemTypeCode = binding.SourceConnection.DataSystemTypeCode,
+                    SourceServer = binding.SourceConnection.Server,
+                    SourceEntities = rScriptSourceEntityInfos
+                };
 
-                    sb.AppendLine();
-                }
-                else
-                {
-                    sb.AppendFormat("{0}\n", binding.Script); //the newline is needed for R to work
-                    sb.AppendLine();
-                }
+                var augmentedRScript = new ScriptParser().GetAugmentedRScript(rScriptParameters);
 
-                sb.Append("#------ below code was injected by the DOS AI Engine ------\n");
-                string printStatement = $@"print(""{CompletedSuccessfullyText}"")";
-                sb.AppendFormat($"{printStatement}\n");
-                sb.AppendLine("#------ end of code injected by the DOS AI Engine ------\n");
-
-                return await this.StartScriptR(bindingExecution, sb.ToString());
+                return await this.StartScriptR(bindingExecution, augmentedRScript);
             }
         }
 
