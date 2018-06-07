@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Catalyst.Platform.CommonExtensions;
-using JetBrains.Annotations;
 
-namespace Plugins.InLineR
+namespace RScriptParser
 {
 
     public class ScriptParser
@@ -42,7 +39,7 @@ namespace Plugins.InLineR
         {
             var text = GetRCode(input);
 
-            IList<string> lines = text.Split('\n').Where(l => l.HasData()).ToList();
+            IList<string> lines = text.Split('\n').Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
 
             return lines;
         }
@@ -78,9 +75,9 @@ namespace Plugins.InLineR
             sb.Append($"{destinationConnectionString}\n");
             sb.AppendLine("#------ end of code injected by the DOS AI Engine ------\n");
 
-            if (rScriptLines.Any())
+            if (Enumerable.Any<string>(rScriptLines))
             {
-                var scriptLines = rScriptLines.Take(rScriptLines.Count);
+                var scriptLines = Enumerable.Take<string>(rScriptLines, rScriptLines.Count);
                 foreach (var scriptLine in scriptLines)
                 {
                     if (!scriptLine.EndsWith("\n"))
@@ -93,7 +90,7 @@ namespace Plugins.InLineR
             }
             else
             {
-                sb.AppendFormat("{0}\n", rScriptParameters.BindingScript); //the newline is needed for R to work
+                sb.AppendFormat((string)"{0}\n", (object)rScriptParameters.BindingScript); //the newline is needed for R to work
                 sb.AppendLine();
             }
 

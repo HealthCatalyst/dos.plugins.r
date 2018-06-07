@@ -1,4 +1,6 @@
-﻿namespace Plugins.InLineR
+﻿using RScriptParser;
+
+namespace Plugins.InLineR
 {
     using System;
     using System.Collections.Generic;

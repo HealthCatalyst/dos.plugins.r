@@ -1,10 +1,13 @@
 ﻿print("Starting script")
+print(Sys.time())
+
 # .libPaths()
 .libPaths( c( .libPaths(), "C:/himss/R/lib") )
 # .libPaths()
 
 setwd("C:/himss/R")
 # getwd()
+print(Sys.time())
 
 # this seems to be needed to make selectData work
 library(methods)
@@ -14,6 +17,7 @@ library(RODBC)
 library(tidyverse)
 
 print("loaded libraries")
+print(Sys.time())
 
 # Pull data from EDW ===========================
 con_str <-  build_connection_string(server = "(local)", database = "SAM")
@@ -34,6 +38,7 @@ con <- RODBC::odbcDriverConnect(con_str)
 d <- RODBC::sqlQuery(con, query)
 glimpse(d)
 print("Loaded data from EDW")
+print(Sys.time())
 
 d_clean <- prep_data(d, FacilityAccountID, outcome = SepsisFLG)
 

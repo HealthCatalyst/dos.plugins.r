@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Plugins.InLineR;
+using RScriptParser;
 
 namespace InlineRTester
 {
