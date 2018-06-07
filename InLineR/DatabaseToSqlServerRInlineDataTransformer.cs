@@ -28,28 +28,22 @@ namespace Plugins.InLineR
     {
         private const string CompletedSuccessfullyText = @"Completed Successfully";
 
-        private static readonly Regex CountRegex = new Regex(@"\[\d+\] (\d+)", RegexOptions.IgnoreCase);
-
         private readonly ILoggingRepository loggingRepository;
-        private readonly IRExecutionService rExecutionService;
         private readonly IMetadataServiceClient metadataServiceClient;
         private readonly IProcessingContextWrapperFactory processingContextWrapperFactory;
 
         public DatabaseToSqlServerRInlineDataTransformer(
             ILoggingRepository loggingRepository,
-            IRExecutionService rExecutionService,
             IMetadataServiceClient metadataServiceClient,
             ISqlExecutor sqlExecutor,
             IProcessingContextWrapperFactory processingContextWrapperFactory)
             : base(sqlExecutor)
         {
             loggingRepository.CheckWhetherArgumentIsNull(nameof(loggingRepository));
-            rExecutionService.CheckWhetherArgumentIsNull(nameof(rExecutionService));
             metadataServiceClient.CheckWhetherArgumentIsNull(nameof(metadataServiceClient));
             processingContextWrapperFactory.CheckWhetherArgumentIsNull(nameof(processingContextWrapperFactory));
 
             this.loggingRepository = loggingRepository;
-            this.rExecutionService = rExecutionService;
             this.metadataServiceClient = metadataServiceClient;
             this.processingContextWrapperFactory = processingContextWrapperFactory;
         }
@@ -78,6 +72,9 @@ namespace Plugins.InLineR
             using (IProcessingContextWrapper processingContextWrapper =
                 this.processingContextWrapperFactory.CreateProcessingContextWrapper())
             {
+                string pathToRExe = processingContextWrapper
+                    .GetSystemAttribute(AttributeName.PathToRExecutable)?.AttributeValueText;
+
                 string pathToRModelFolder = processingContextWrapper
                     .GetSystemAttribute(AttributeName.PathToRModelFolder)?.AttributeValueText;
 
@@ -116,11 +113,11 @@ namespace Plugins.InLineR
 
                 var augmentedRScript = new ScriptParser().GetAugmentedRScript(rScriptParameters);
 
-                return await this.StartScriptR(bindingExecution, augmentedRScript);
+                return await this.StartScriptR(pathToRExe, bindingExecution, augmentedRScript);
             }
         }
 
-        private async Task<long> StartScriptR(BindingExecution bindingExecution, string script)
+        private async Task<long> StartScriptR(string pathToRExe, BindingExecution bindingExecution, string script)
         {
             script.CheckWhetherArgumentIsNullOrWhiteSpace(nameof(script));
 
@@ -132,12 +129,12 @@ namespace Plugins.InLineR
                 bindingExecution.EntityExecution,
                 bindingExecution);
 
-            var result = await this.rExecutionService.ExecuteScriptAsync(script, true);
+            var result = await new MyRExecutionService().ExecuteScriptAsync(pathToRExe, script, true, CompletedSuccessfullyText);
 
             return this.FinishScriptR(bindingExecution, result, script);
         }
 
-        private long FinishScriptR(BindingExecution bindingExecution, ShellTaskResult result, string script)
+        private long FinishScriptR(BindingExecution bindingExecution, MyShellTaskResult result, string script)
         {
             result.CheckWhetherArgumentIsNull(nameof(result));
 
@@ -154,25 +151,12 @@ namespace Plugins.InLineR
                 return 0;
             }
 
-            if (!result.Output.Contains($"{CompletedSuccessfullyText}"))
+            if (!result.Succeeded)
             {
                 throw new InvalidOperationException(Resources.ScriptExecutionErrorOccurred.FormatCurrentCulture(script, result.Error));
             }
 
-            var match = CountRegex.Match(result.Output);
-
-            if (match.Success)
-            {
-                long recordCount;
-                if (!long.TryParse(match.Groups[1].Value, NumberStyles.Any, CultureInfo.CurrentCulture, out recordCount))
-                {
-                    recordCount = 0;
-                }
-
-                return recordCount;
-            }
-
-            return 0;
+            return result.RecordCount;
         }
     }
 }

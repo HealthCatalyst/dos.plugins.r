@@ -11,7 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RServeClient", "RServeClien
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RserveCLI2", "RServeCLI2\RserveCLI2.csproj", "{9BCC1A07-126C-4B24-904A-C0F0D9DCC420}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RScriptParser", "RScriptParser\RScriptParser.csproj", "{33840664-7F3C-42FA-87AA-1516AA3444C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RScriptParser", "RScriptParser\RScriptParser.csproj", "{33840664-7F3C-42FA-87AA-1516AA3444C8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RTestHarness", "RTestHarness\RTestHarness.csproj", "{2985CA32-3AB7-4882-B44E-AACFA80889BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{33840664-7F3C-42FA-87AA-1516AA3444C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33840664-7F3C-42FA-87AA-1516AA3444C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33840664-7F3C-42FA-87AA-1516AA3444C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2985CA32-3AB7-4882-B44E-AACFA80889BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2985CA32-3AB7-4882-B44E-AACFA80889BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2985CA32-3AB7-4882-B44E-AACFA80889BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2985CA32-3AB7-4882-B44E-AACFA80889BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -11,11 +11,12 @@ namespace InlineRTester
     public class RServeClientTester
     {
         const string serverfolder = "/opt/healthcatalyst/models/";
+        private string urlTorServe = "kubernetes.hqcatalyst.local";
 
         [TestMethod]
         public void TestRunSimplePrintStatement()
         {
-            using (var rServeClientTester = new RServeClient.RServeClient())
+            using (var rServeClientTester = new RServeClient.RServeClient(urlTorServe))
             {
                 var script = $@"print(""imran"")";
 
@@ -27,7 +28,7 @@ namespace InlineRTester
         [TestMethod]
         public void TestRunSimple()
         {
-            using (var rServeClientTester = new RServeClient.RServeClient())
+            using (var rServeClientTester = new RServeClient.RServeClient(urlTorServe))
             {
                 var script = $@"setwd(""{serverfolder}"");getwd()";
 
@@ -42,7 +43,7 @@ namespace InlineRTester
         [TestMethod]
         public void TestShowInstalledPackages()
         {
-            using (var rServeClientTester = new RServeClient.RServeClient())
+            using (var rServeClientTester = new RServeClient.RServeClient(urlTorServe))
             {
                 var script = $@"setwd(""{serverfolder}"");installed.packages()[,1]";
 
@@ -63,7 +64,7 @@ namespace InlineRTester
         [TestMethod]
         public void TestRunSqlQuery()
         {
-            using (var rServeClientTester = new RServeClient.RServeClient())
+            using (var rServeClientTester = new RServeClient.RServeClient(urlTorServe))
             {
                 var machineName = Environment.MachineName;
                 var fullMachineName = GetLocalhostFqdn();
@@ -96,7 +97,7 @@ cat(""Finished script"")
 print(res)
 jsonlite::toJSON(res)";
 
-                var dataTable = rServeClientTester.Run<DataTable>(script);
+                var dataTable = rServeClientTester.RunAsync<DataTable>(script).Result;
                 var rowsCount = dataTable.Rows.Count;
                 var row = dataTable.Rows[0];
                 var column = row[0];
@@ -109,7 +110,7 @@ jsonlite::toJSON(res)";
         [TestMethod]
         public void TestCopyModelFiles()
         {
-            using (var rServeClientTester = new RServeClient.RServeClient())
+            using (var rServeClientTester = new RServeClient.RServeClient(urlTorServe))
             {
 
                 var localfolder = @"C:\himss\R\";
@@ -133,7 +134,7 @@ library(jsonlite)
 res <- list.files(""{serverfolder}"")
 jsonlite::toJSON(res)";
 
-                var list = rServeClientTester.Run<IList>(script);
+                var list = rServeClientTester.RunAsync<IList>(script).Result;
 
                 Console.WriteLine($"Files in {serverfolder}");
                 foreach (var item in list)
@@ -147,7 +148,7 @@ jsonlite::toJSON(res)";
         [TestMethod]
         public void TestInstallPackages()
         {
-            using (var rServeClientTester = new RServeClient.RServeClient())
+            using (var rServeClientTester = new RServeClient.RServeClient(urlTorServe))
             {
 
                 var script = $@"
@@ -158,7 +159,7 @@ library(randgeo)
 res <- wkt_point()
 jsonlite::toJSON(res)";
 
-                var list = rServeClientTester.Run<IList>(script);
+                var list = rServeClientTester.RunAsync<IList>(script).Result;
                 foreach (var item in list)
                 {
                     Console.WriteLine(item);

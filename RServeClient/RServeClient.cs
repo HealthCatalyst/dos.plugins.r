@@ -16,16 +16,16 @@ namespace RServeClient
     {
         private readonly RConnection _rconnection;
 
-        public RServeClient()
+        public RServeClient(string servername)
         {
-            _rconnection = RConnection.Connect(new System.Net.IPAddress(new byte[] { 127, 0, 0, 1 }));
+            _rconnection = RConnection.Connect(servername);
         }
-        public T Run<T>(string script)
+        public async Task<T> RunAsync<T>(string script)
         {
             // copy file to rserve
             var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(script));
             var myscriptR = "myscript.R";
-            _rconnection.WriteFileAsync(myscriptR, memoryStream).Wait();
+            await _rconnection.WriteFileAsync(myscriptR, memoryStream);
 
             var code = $@"source(""{myscriptR}"")";
 

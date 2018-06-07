@@ -1,23 +1,23 @@
 ﻿print("Starting script")
 print(Sys.time())
 
-# .libPaths()
-.libPaths( c( .libPaths(), "C:/himss/R/lib") )
-# .libPaths()
-
-setwd("C:/himss/R")
-# getwd()
+print("Loading libraries")
 print(Sys.time())
+
+library(needs)
 
 # this seems to be needed to make selectData work
-library(methods)
-library(healthcareai)
-library(RODBC)
+needs(methods)
+needs(RODBC)
 ## Install dplyr package with this code: install.packages("dplyr")
-library(tidyverse)
-
+needs(tidyverse)
 print("loaded libraries")
 print(Sys.time())
+
+needs(healthcareai)
+print("loaded healthcare.ai library")
+print(Sys.time())
+
 
 # Pull data from EDW ===========================
 con_str <-  build_connection_string(server = "(local)", database = "SAM")
@@ -33,6 +33,7 @@ summ.FacilityAccountID
 ,summ.AntibioticPrior7DaysFLG
 ,summ.SepsisFLG
 FROM SAM.Sepsis.EWSSummary summ
+WHERE summ.FacilityAccountID in ('500041410', '500282154', '500161000')
 "
 con <- RODBC::odbcDriverConnect(con_str)
 d <- RODBC::sqlQuery(con, query)
@@ -40,24 +41,29 @@ glimpse(d)
 print("Loaded data from EDW")
 print(Sys.time())
 
-d_clean <- prep_data(d, FacilityAccountID, outcome = SepsisFLG)
+print("prepped data")
+print(Sys.time())
 
 # Train model ======================
 # Only need this block to train model the first time.
 if (0==1) {
   print("Training model")
-  d_clean <- prep_data(d, FacilityAccountID, outcome = SepsisFLG)
-  m <- flash_models(d = d_clean, outcome = SepsisFLG, models = "rf")
-  save_models(x = m, filename = "sepsis_demo_model_2018-05-04.RDS")
+d_clean <- prep_data(d, FacilityAccountID, outcome = SepsisFLG)
+m <- flash_models(d = d_clean, outcome = SepsisFLG, models = "rf")
+save_models(x = m, filename = "sepsis_demo_model_2018-06-07.RDS")
 }
 
 # Generate predictions ======================
-print("Loading model and generating predictions")
-m <- load_models(filename = "sepsis_demo_model_2018-05-04.RDS")
+print("Loading model")
+print(Sys.time())
+m <- load_models(filename = "sepsis_demo_model_2018-06-07.RDS")
 
 # Pretend the new data is the first 10 patients.
-d_pred <- predict(m, newdata = d_clean[1:10, ], prepdata = FALSE)
+print("running model")
+print(Sys.time())
+d_pred <- predict(m, newdata = d)
 print("Finished model")
+print(Sys.time())
 
 # Get top factors =======================
 v <- get_variable_importance(models = m)
@@ -195,7 +201,7 @@ d_pred <- select(d_pred,BindingID,BindingNM,LastLoadDTS,FacilityAccountID
                  ,predicted_SepsisFLG  ,Factor1TXT,Factor2TXT,Factor3TXT,Factor4TXT
                  ,Factor5TXT,AdmitAgeNBR,TemperatureMaxNBR
                  ,PulseMaxNBR,O2SatMinNBR,SBPMinNBR,EDVisitsPrior90DaysNBR
-                 ,AntibioticPrior7DaysFLG_Y,SepsisFLG,RankedRiskFactor1DSC
+                 ,AntibioticPrior7DaysFLG,SepsisFLG,RankedRiskFactor1DSC
                  ,RankedRiskFactor2DSC,RankedRiskFactor3DSC,RankedRiskFactor4DSC
                  ,RankedRiskFactor5DSC
                  ,RelativeRiskValueDSC,RelativeRiskHigherLowerDSC,AlertPopUpFLG
@@ -223,7 +229,7 @@ d_pred <- select(d_pred,BindingID,BindingNM,LastLoadDTS,FacilityAccountID
 #   ,O2SatMinNBR int
 #   ,SBPMinNBR int
 #   ,EDVisitsPrior90DaysNBR int
-#   ,AntibioticPrior7DaysFLG_Y varchar(255)
+#   ,AntibioticPrior7DaysFLG varchar(255)
 #   ,SepsisFLG varchar(255)
 #   ,RankedRiskFactor1DSC varchar(255)
 #   ,RankedRiskFactor2DSC varchar(255)
@@ -239,6 +245,8 @@ d_pred <- select(d_pred,BindingID,BindingNM,LastLoadDTS,FacilityAccountID
 
 d_pred$LastCalculatedDTS<-Sys.time()
 
+print("Finished mutates")
+print(Sys.time())
 print("saving output")
 
 RODBC::sqlSave(con, d_pred, "Sepsis.EWSPredictionsBASE", append = TRUE,
@@ -248,4 +256,4 @@ RODBC::sqlSave(con, d_pred, "Sepsis.EWSPredictionsBASE", append = TRUE,
 RODBC::odbcClose(con)
 
 print("Finished script")
-
+print(Sys.time())
